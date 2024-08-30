@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect Page</title>
+</head>
+<body>
+    <h1>Redirect Successful</h1>
+    <p>If you see this page, you have been successfully redirected.</p>
+    <!-- This is where you can add JavaScript to handle the redirect data -->
+    <script>
+        // Example: Extract authorization code from the URL
+        const params = new URLSearchParams(window.location.search);
+        const authCode = params.get('code');
+        if (authCode) {
+            console.log('Authorization Code:', authCode);
+            // You can send this code to your backend server for further processing
+        }
+    </script>
+</body>
+</html>
