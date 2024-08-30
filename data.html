@@ -1,31 +1,124 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Test Fetch</title>
+    <title>QuickBooks Balance Sheet</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 18px;
+            text-align: left;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        caption {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .section-header {
+            font-weight: bold;
+            background-color: #f4f4f4;
+        }
+    </style>
 </head>
 <body>
-    <h1>Test Fetch</h1>
-    <div id="test-output">Loading...</div>
+    <h1>QuickBooks Balance Sheet Report</h1>
+    <table id="balance-sheet">
+        <caption>Balance Sheet</caption>
+        <thead id="header-row">
+            <!-- Table headers will be inserted here -->
+        </thead>
+        <tbody id="data-rows">
+            <!-- Table rows will be inserted here -->
+        </tbody>
+    </table>
 
     <script>
-        async function testFetch() {
+        async function fetchReport() {
             try {
-                const response = await fetch('https://masomac15.github.io/acquiremed/report-data.json'); // Adjust URL if needed
+                const response = await fetch('https://masomac15.github.io/acquiremed/report-data.json');
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                document.getElementById('test-output').innerText = JSON.stringify(data, null, 2);
+                renderTable(data);
             } catch (error) {
-                console.error('Error fetching data:', error);
-                document.getElementById('test-output').innerText = 'Failed to load data.';
+                console.error('Error fetching report:', error);
+                document.getElementById('balance-sheet').innerHTML = 'Failed to load report.';
             }
         }
 
-        testFetch();
+        function renderTable(data) {
+            const headerRow = document.getElementById('header-row');
+            const dataRows = document.getElementById('data-rows');
+            
+            // Clear existing content
+            headerRow.innerHTML = '';
+            dataRows.innerHTML = '';
+
+            function addRow(columns, values, isHeader = false) {
+                const tr = document.createElement('tr');
+                columns.forEach((col, index) => {
+                    const td = document.createElement(isHeader ? 'th' : 'td');
+                    td.textContent = values[index] || '';
+                    tr.appendChild(td);
+                });
+                dataRows.appendChild(tr);
+            }
+
+            function addSection(header, rows) {
+                // Add section header
+                const sectionHeader = document.createElement('tr');
+                sectionHeader.className = 'section-header';
+                sectionHeader.innerHTML = `<td colspan="${header.length}">${header}</td>`;
+                dataRows.appendChild(sectionHeader);
+
+                // Add rows for the section
+                rows.forEach(row => {
+                    if (row.Header) {
+                        addRow(
+                            row.Header.ColData.map(col => col.value),
+                            row.Rows.Row.map(cell => cell.ColData.map(col => col.value)[1]),
+                            false
+                        );
+                        if (row.Summary) {
+                            addRow(
+                                [row.Summary.ColData[0].value],
+                                [row.Summary.ColData[1].value],
+                                false
+                            );
+                        }
+                    }
+                });
+            }
+
+            // Render the balance sheet
+            const columns = data.Columns.Column.map(col => col.ColTitle || '');
+            addRow(columns, columns, true);
+
+            data.Rows.Row.forEach(section => {
+                const sectionHeader = section.Header.ColData[0].value;
+                const sectionRows = section.Rows.Row;
+                addSection(sectionHeader, sectionRows);
+            });
+
+            // Add the final summary
+            if (data.Rows.Summary) {
+                addRow(
+                    [data.Rows.Summary.ColData[0].value],
+                    [data.Rows.Summary.ColData[1].value],
+                    false
+                );
+            }
+        }
+
+        fetchReport();
     </script>
 </body>
 </html>
-
-
-
